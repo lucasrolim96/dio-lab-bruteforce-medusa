@@ -1,0 +1,15 @@
+administrator
+admin
+msfadmin
+user
+guest
+backup
+service
+nobody
+sysadmin
+financeiro
+rh
+ti
+suporte
+diretoria
+developer

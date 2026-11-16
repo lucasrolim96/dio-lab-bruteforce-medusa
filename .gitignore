@@ -1,0 +1,17 @@
+# Logs e saídas de testes
+*.log
+*.txt.out
+resultados_*.txt
+recon_*.txt
+medusa_*.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/

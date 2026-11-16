@@ -1,0 +1,15 @@
+root
+msfadmin
+admin
+administrator
+user
+guest
+service
+backup
+postgres
+mysql
+tomcat
+test
+operator
+support
+sysadmin
