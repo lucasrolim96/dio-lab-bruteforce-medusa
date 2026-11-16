@@ -1,111 +1,103 @@
-# 🛡️ Simulação de Ataque de Brute Force com Medusa e Kali Linux
+# Simulação de Ataque de Força Bruta com Medusa e Kali Linux
 
-> **Projeto Prático - Bootcamp Santander Cibersegurança 2024 / 2025**  
-> *Plataforma:* [Digital Innovation One (DIO)](https://dio.me)  
-> *Módulo:* Simulando um Ataque de Brute Force de Senhas com Medusa e Kali Linux
+> **Projeto Prático de Cibersegurança**  
+> **Bootcamp Santander Cibersegurança 2024 / 2025 - DIO**  
+> **Autor:** Lucas Rolim ([@lucasrolim96](https://github.com/lucasrolim96))
 
 ---
 
-## 📋 Sumário
-- [1. Visão Geral do Projeto](#1-visão-geral-do-projeto)
-- [2. Topologia do Ambiente de Laboratório](#2-topologia-do-ambiente-de-laboratório)
-- [3. Fundamentos Teóricos](#3-fundamentos-teóricos)
-  - [Força Bruta Tradicional vs Dicionário](#força-bruta-tradicional-vs-dicionário)
+## Sumário
+- [1. Visão Geral](#1-visão-geral)
+- [2. Ambiente do Laboratório](#2-ambiente-do-laboratório)
+- [3. Conceitos Aplicados](#3-conceitos-aplicados)
+  - [Força Bruta vs Ataque de Dicionário](#força-bruta-vs-ataque-de-dicionário)
   - [Password Spraying vs Credential Stuffing](#password-spraying-vs-credential-stuffing)
-- [4. Reconhecimento e Enumeração de Rede](#4-reconhecimento-e-enumeração-de-rede)
-- [5. Cenários Práticos de Ataque](#5-cenários-práticos-de-ataque)
-  - [Cenário 1: Força Bruta em Serviço FTP com Medusa](#cenário-1-força-bruta-em-serviço-ftp-com-medusa)
-  - [Cenário 2: Ataques em Formulários Web (DVWA)](#cenário-2-ataques-em-formulários-web-dvwa)
-  - [Cenário 3: Ataque em Cadeia - Enumeração SMB e Password Spraying](#cenário-3-ataque-em-cadeia---enumeração-smb-e-password-spraying)
-- [6. Validação de Acessos Obtidos](#6-validação-de-acessos-obtidos)
-- [7. Comparativo de Ferramentas de Auditoria](#7-comparativo-de-ferramentas-de-auditoria)
-- [8. Medidas de Mitigação e Hardening (Blue Team)](#8-medidas-de-mitigação-e-hardening-blue-team)
+- [4. Reconhecimento e Descoberta de Serviços](#4-reconhecimento-e-descoberta-de-serviços)
+- [5. Cenários Práticos Executados](#5-cenários-práticos-executados)
+  - [Cenário 1: Auditoria em Serviço FTP com Medusa](#cenário-1-auditoria-em-serviço-ftp-com-medusa)
+  - [Cenário 2: Automação em Formulário Web (DVWA)](#cenário-2-automação-em-formulário-web-dvwa)
+  - [Cenário 3: Enumeração de Usuários e Password Spraying em SMB](#cenário-3-enumeração-de-usuários-e-password-spraying-em-smb)
+- [6. Validação dos Acessos](#6-validação-dos-acessos)
+- [7. Comparativo entre Ferramentas de Auditoria](#7-comparativo-entre-ferramentas-de-auditoria)
+- [8. Medidas de Mitigação e Hardening](#8-medidas-de-mitigação-e-hardening)
 - [9. Estrutura do Repositório](#9-estrutura-do-repositório)
-- [10. Conclusão e Referências](#10-conclusão-e-referências)
+- [10. Conclusão e Autor](#10-conclusão-e-autor)
 
 ---
 
-## 1. Visão Geral do Projeto
+## 1. Visão Geral
 
-Este projeto tem como objetivo demonstrar, documentar e analisar **ataques de força bruta e quebra de credenciais** utilizando o sistema operacional **Kali Linux** e a ferramenta **Medusa**, além de contrapor com ferramentas complementares (Hydra, Ncrack, John the Ripper).
+Este repositório documenta a execução prática do laboratório de simulação de ataques de autenticação utilizando **Kali Linux** e a ferramenta **Medusa**, realizado como parte do Bootcamp Santander Cibersegurança na plataforma DIO.
 
-O laboratório foi implementado em um ambiente estritamente controlado e isolado (*Host-Only Network*) utilizando duas máquinas virtuais:
-- **Kali Linux:** Máquina de auditoria e testes de intrusão.
-- **Metasploitable 2:** Alvo intencionalmente vulnerável provendo serviços como FTP, HTTP (com DVWA - *Damn Vulnerable Web Application*), SSH e Samba/SMB.
-
-Além da simulação ofensiva (*Red Team*), o projeto dedica atenção aprofundada às **estratégias de prevenção e mitigação (*Blue Team*)**, essenciais para a defesa de infraestruturas corporativas modernas.
+Durante o laboratório, foram explorados serviços intencionalmente vulneráveis no **Metasploitable 2** (como FTP, Samba/SMB e a aplicação web DVWA). O objetivo foi compreender o funcionamento técnico de ferramentas de quebra de credenciais online, avaliar as limitações operacionais de cada abordagem e, principalmente, estruturar recomendações sólidas de defesa e mitigação (*Blue Team*).
 
 ---
 
-## 2. Topologia do Ambiente de Laboratório
+## 2. Ambiente do Laboratório
 
-O ambiente foi montado com virtualização no **Oracle VM VirtualBox**. Ambas as máquinas compartilham o mesmo barramento de rede interna (*Host-Only Adapter*), garantindo que o tráfego gerado não trafegue na rede local física e não tenha acesso à internet.
+O ambiente foi configurado no **Oracle VM VirtualBox**, composto por duas máquinas virtuais conectadas exclusivamente em uma rede interna isolada (*Host-Only Network / vboxnet0*), garantindo total isolamento e segurança durante os testes:
+
+- **Atacante / Auditor:** Kali Linux (IP: `192.168.56.102`)
+- **Alvo Vulnerável:** Metasploitable 2 (IP: `192.168.56.101`)
 
 ```mermaid
 flowchart LR
-    subgraph Host["Computador Físico (Host)"]
-        subgraph VirtualBox["VirtualBox (Rede Host-Only: 192.168.56.0/24)"]
-            Kali["Kali Linux (Auditor/Atacante)\nIP: 192.168.56.102"]
-            Target["Metasploitable 2 (Alvo Vulnerável)\nIP: 192.168.56.101"]
+    subgraph Host["Máquina Física"]
+        subgraph VirtualBox["Rede Host-Only (192.168.56.0/24)"]
+            Kali["Kali Linux\n192.168.56.102"]
+            Target["Metasploitable 2\n192.168.56.101"]
         end
     end
 
-    Kali -->|"1. Reconhecimento (Nmap / Ping)"| Target
-    Kali -->|"2. Brute Force FTP (Porta 21) via Medusa"| Target
-    Kali -->|"3. Ataque em Formulário Web (DVWA / Porta 80)"| Target
-    Kali -->|"4. Enumeração e Password Spraying SMB (Porta 445)"| Target
+    Kali -->|"1. Varredura Nmap (Portas 21, 80, 139, 445)"| Target
+    Kali -->|"2. Força Bruta FTP (Medusa)"| Target
+    Kali -->|"3. Ataque a Formulário Web (DVWA / Hydra)"| Target
+    Kali -->|"4. Spraying SMB (Medusa smbnt)"| Target
 ```
 
 ---
 
-## 3. Fundamentos Teóricos
+## 3. Conceitos Aplicados
 
-### Força Bruta Tradicional vs Dicionário
-- **Força Bruta Exaustiva (*Pure Brute Force*):** Testa sistematicamente todas as permutações possíveis de caracteres (comprimentos de 1 a N, combinando letras, números e símbolos). Matematicamente inviável para senhas longas devido à complexidade combinatória exponencial $O(C^L)$.
-- **Ataque de Dicionário (*Dictionary Attack*):** Em vez de permutações cegas, utiliza listas de senhas reais compiladas de vazamentos de dados históricos (*wordlists* famosas como `rockyou.txt`), otimizando tempo e taxa de acerto.
+### Força Bruta vs Ataque de Dicionário
+- **Força Bruta Pura (*Exhaustive Brute Force*):** Gera e testa todas as permutações possíveis de caracteres sequencialmente (ex: a, aa, ab... 1234). Torna-se impraticável rapidamente à medida que o tamanho da senha aumenta.
+- **Ataque de Dicionário (*Dictionary Attack*):** Testa palavras pré-compiladas com base em senhas comuns e vazamentos históricos (ex: `rockyou.txt`), reduzindo o tempo de teste e aumentando as chances de sucesso contra credenciais fracas.
 
 ### Password Spraying vs Credential Stuffing
-| Conceito | Mecanismo | Comportamento Típico | Efeito nas Políticas de Bloqueio |
+| Abordagem | Funcionamento | Comportamento no Sistema | Risco de Bloqueio |
 | :--- | :--- | :--- | :--- |
-| **Força Bruta Direcionada** | Milhares de senhas testadas contra **1 único usuário**. | Alta frequência de requisições por conta. | **Dispara o bloqueio** (*Account Lockout*) rapidamente. |
-| **Password Spraying** | **1 única senha fraca** testada contra **centenas de contas** simultaneamente. | Baixa frequência por usuário, diluída no tempo. | **Burlar limites** convencionais de bloqueio de conta. |
-| **Credential Stuffing** | Combinações reais de `usuario:senha` obtidas em vazamentos de terceiros testadas em outros sistemas. | Validação automatizada em massa. | Efetivo devido ao hábito de reutilização de senhas. |
+| **Força Bruta Convencional** | Centenas ou milhares de senhas contra **1 único usuário**. | Muitas falhas consecutivas na mesma conta. | **Alto**: Dispara a política de *Account Lockout* rapidamente. |
+| **Password Spraying** | **1 ou 2 senhas comuns** testadas contra **vários usuários diferentes**. | Poucas tentativas por conta, distribuídas no tempo. | **Baixo**: Bula políticas de bloqueio baseadas em tentativas consecutivas por usuário. |
+| **Credential Stuffing** | Pares de `usuario:senha` vazados em outros serviços testados em massa. | Testa credenciais conhecidas. | Efetivo devido ao mau hábito de reutilização de senhas entre serviços. |
 
 ---
 
-## 4. Reconhecimento e Enumeração de Rede
+## 4. Reconhecimento e Descoberta de Serviços
 
-Antes de executar qualquer teste de autenticação, o primeiro passo é validar o alcance do alvo e mapear quais portas e serviços estão ativos.
+Antes de iniciar os testes de credenciais, foram realizados o teste de conectividade e a identificação de portas abertas no alvo:
 
-### 1. Teste de Conectividade
 ```bash
+# 1. Testar conectividade ICMP
 ping -c 3 192.168.56.101
-```
 
-### 2. Varredura com Nmap
-```bash
+# 2. Varredura direcionada com Nmap
 nmap -p 21,22,80,139,445 -sV -sC -Pn 192.168.56.101
 ```
 
-**Portas de interesse mapeadas:**
-- `21/tcp`: **vsftpd 2.3.4** (File Transfer Protocol)
-- `80/tcp`: **Apache httpd 2.2.8** (Hospeda DVWA e Mutillidae)
-- `139/445/tcp`: **Samba 3.X** (Compartilhamento de arquivos de rede SMB)
+**Serviços identificados:**
+- **Porta 21/TCP:** `vsftpd 2.3.4` (File Transfer Protocol)
+- **Porta 80/TCP:** `Apache httpd 2.2.8` (Servidor web hospedando DVWA)
+- **Portas 139 e 445/TCP:** `Samba 3.0.20-Debian` (Compartilhamento de arquivos SMB)
 
 ---
 
-## 5. Cenários Práticos de Ataque
+## 5. Cenários Práticos Executados
 
-### Cenário 1: Força Bruta em Serviço FTP com Medusa
+### Cenário 1: Auditoria em Serviço FTP com Medusa
 
-O FTP frequentemente sofre com falta de criptografia em trânsito e ausência de limites nativos para erros de autenticação contínuos.
+O protocolo FTP transmite credenciais em texto claro e, em serviços desatualizados, frequentemente não impõe limites para tentativas incorretas de logon.
 
-#### Criação das Wordlists Didáticas
-No diretório do projeto, foram criadas listas objetivas:
-- `wordlists/users_common.txt`: nomes de usuários comuns (`msfadmin`, `root`, `admin`, `user`).
-- `wordlists/passwords_common.txt`: senhas comuns e fracas (`123456`, `password`, `msfadmin`, `root`).
-
-#### Execução do Comando Medusa
+**Comando executado:**
 ```bash
 medusa -h 192.168.56.101 \
        -U wordlists/users_common.txt \
@@ -114,62 +106,51 @@ medusa -h 192.168.56.101 \
        -t 4 \
        -f \
        -v 4 \
-       -O resultados_ftp.txt
+       -O medusa_ftp_result.txt
 ```
 
-#### Explicação dos Parâmetros:
-- `-h 192.168.56.101`: IP do host alvo.
-- `-U ...`: Caminho para a lista de usuários a testar.
-- `-P ...`: Caminho para a lista de senhas a testar.
-- `-M ftp`: Carrega o módulo dinâmico C específico para o protocolo FTP.
-- `-t 4`: Estabelece até 4 conexões concorrentes.
-- `-f`: *(Stop on first success)* Para a execução no momento em que a primeira credencial válida for validada.
-- `-v 4`: Nível de verbosidade detalhado para acompanhar o envio de pacotes.
-- `-O resultados_ftp.txt`: Exporta as credenciais válidas encontradas para um arquivo de texto.
+**Significado das opções utilizadas:**
+- `-h 192.168.56.101`: Endereço IP do alvo.
+- `-U wordlists/users_common.txt`: Arquivo com a lista de usuários a testar.
+- `-P wordlists/passwords_common.txt`: Arquivo com a lista de senhas a testar.
+- `-M ftp`: Módulo para teste do protocolo FTP.
+- `-t 4`: Número de threads simultâneas para não sobrecarregar o serviço.
+- `-f`: *(Stop on first success)* Interrompe a execução assim que encontrar uma credencial válida no host.
+- `-v 4`: Nível de verbosidade detalhado para acompanhar o progresso.
+- `-O medusa_ftp_result.txt`: Salva o resultado positivo em arquivo.
 
-**Resultado Obtido:**
+**Credencial identificada:**
 ```text
 ACCOUNT FOUND: [ftp] Host: 192.168.56.101 User: msfadmin Password: msfadmin [SUCCESS]
 ```
 
 ---
 
-### Cenário 2: Ataques em Formulários Web (DVWA)
+### Cenário 2: Automação em Formulário Web (DVWA)
 
-O **DVWA** (*Damn Vulnerable Web Application*) possui um módulo específico denominado **"Brute Force"** (`/dvwa/vulnerabilities/brute/`).
+O **DVWA** (*Damn Vulnerable Web Application*) possui uma página específica para testes de força bruta (`/dvwa/vulnerabilities/brute/`).
 
-Diferente de protocolos baseados em texto puro ou sockets simples (como FTP), formulários web requerem o envio de requisições HTTP (GET/POST) com parâmetros de formulário e **cookies de sessão ativos**.
+Diferente de serviços de rede simples como FTP, formulários web utilizam requisições HTTP GET/POST, dependem de cookies de sessão (`PHPSESSID`) e retornam códigos HTTP 200 tanto para sucesso quanto para falha, exigindo validação por string de erro.
 
-#### Mapeamento da Requisição HTTP:
-Ao inspecionar a submissão do formulário no navegador ou via interceptação:
-- **URL Alvo:** `http://192.168.56.101/dvwa/vulnerabilities/brute/`
-- **Método:** `GET`
-- **Parâmetros:** `username=admin&password=123456&Login=Login`
-- **Mensagem de Falha:** `Username and/or password incorrect.`
-- **Cookie de Sessão Obrigatório:** `PHPSESSID=...; security=low`
-
-#### Automação com Medusa / Hydra:
-Enquanto o módulo `http` do Medusa é adequado para autenticação básica (`HTTP Basic Auth`), formulários web complexos são tradicionalmente auditados de forma mais direta com o **THC-Hydra**:
+Como abordado durante as aulas, embora o Medusa possua módulo HTTP básico, o **THC-Hydra** é a ferramenta ideal para formulários web com sessão:
 
 ```bash
 hydra -l admin -P wordlists/passwords_common.txt 192.168.56.101 http-get-form \
-  "/dvwa/vulnerabilities/brute/:username=^USER^&password=^PASS^&Login=Login:F=Username and/or password incorrect.:H=Cookie: security=low; PHPSESSID=7b34bdf8872e457788190d78b871c53e"
+  "/dvwa/vulnerabilities/brute/:username=^USER^&password=^PASS^&Login=Login:F=Username and/or password incorrect.:H=Cookie: security=low; PHPSESSID=seu_cookie_aqui"
 ```
 
 ---
 
-### Cenário 3: Ataque em Cadeia - Enumeração SMB e Password Spraying
+### Cenário 3: Enumeração de Usuários e Password Spraying em SMB
 
-Em ambientes corporativos com diretórios de autenticação centralizados (Active Directory ou servidores Samba), realizar força bruta massiva contra um único usuário gera alertas imediatos no SIEM e trava a conta da vítima.
+Em ambientes corporativos com Windows ou Samba, a força bruta tradicional gera bloqueio imediato das contas. O **Password Spraying** contorna isso testando uma única senha corporativa comum contra múltiplos usuários válidos.
 
-A técnica de **Password Spraying** resolve isso: primeiro realizamos a **enumeração de usuários legítimos** e, em seguida, pulverizamos uma única senha corporativa comum (ex: `Empresa@2024` ou `123456`) contra toda a base.
-
-#### 1. Enumeração de Usuários no Samba/SMB
-Utilizando o `enum4linux` ou Nmap scripts para extrair os usuários da máquina alvo:
+#### 1. Enumeração prévia de usuários
+Com ferramentas como `enum4linux`, foi possível enumerar os usuários existentes no Samba do Metasploitable 2:
 ```bash
 enum4linux -U 192.168.56.101
 ```
-*Usuários identificados salvos em `wordlists/smb_users.txt`.*
+Os nomes foram organizados no arquivo `wordlists/smb_users.txt`.
 
 #### 2. Execução do Password Spraying com Medusa
 ```bash
@@ -180,69 +161,67 @@ medusa -h 192.168.56.101 \
        -t 2 \
        -v 4
 ```
-- O parâmetro `-p "msfadmin"` define uma **única senha** para ser testada contra todos os usuários da lista (`-U`).
-- O módulo `smbnt` realiza o handshake de autenticação NTLM sobre a porta SMB (139/445).
+- `-p "msfadmin"`: Define uma única senha para ser testada contra todos os usuários (`-U`).
+- `-M smbnt`: Módulo para autenticação NTLM em serviços SMB.
 
 ---
 
-## 6. Validação de Acessos Obtidos
+## 6. Validação dos Acessos
 
-Após identificar credenciais válidas durante o teste, o pentester deve sempre validar a autenticidade do acesso.
+Após a identificação das credenciais pelas ferramentas, foi feita a validação manual dos acessos para confirmar os privilégios obtidos.
 
-### Validação de Acesso FTP:
+### Validação do Acesso FTP:
 ```bash
 ftp 192.168.56.101
-Name: msfadmin
-Password: msfadmin
+# Entrada: msfadmin / msfadmin
 ftp> ls
 ftp> exit
 ```
 
-### Validação de Acesso SMB com Smbclient:
-Para listar os compartilhamentos de arquivos disponíveis e acessar os dados:
+### Validação do Acesso SMB com `smbclient`:
 ```bash
-# Listar recursos compartilhados (Shares)
+# Listar compartilhamentos disponíveis
 smbclient -L //192.168.56.101 -U msfadmin%msfadmin
 
-# Conectar em um compartilhamento específico
+# Conectar ao compartilhamento /tmp
 smbclient //192.168.56.101/tmp -U msfadmin%msfadmin
 ```
 
 ---
 
-## 7. Comparativo de Ferramentas de Auditoria
+## 7. Comparativo entre Ferramentas de Auditoria
 
-Durante o curso da DIO, diversas ferramentas do Kali Linux foram apresentadas:
+Durante o módulo foram apresentadas diversas ferramentas do ecossistema Kali Linux:
 
-| Ferramenta | Camada de Atuação | Ponto Forte | Limitação |
+| Ferramenta | Camada de Operação | Principais Vantagens | Melhores Casos de Uso |
 | :--- | :--- | :--- | :--- |
-| **Medusa** | Rede (Online) | Modularidade em C, estabilidade, alta velocidade em sockets brutos (FTP, Telnet, SMB). | Sintaxe de formulários web complexos menos amigável. |
-| **THC-Hydra** | Rede (Online) | Suporte excepcional a formulários web modernos, tokens e cookies. | Consumo elevado de recursos em altas threads. |
-| **Ncrack** | Rede (Online) | Algoritmo adaptativo de timing baseado no estado dinâmico da rede. | Menor diversidade de módulos prontos. |
-| **Patator** | Rede (Online) | Código em Python com suporte a regex para qualquer resposta customizada. | Desempenho de requisições/s ligeiramente inferior ao C puro. |
-| **John the Ripper** | Host (Offline) | Quebra de hashes locais com aceleração por CPU/GPU e regras de mutação. | Não atua diretamente contra portas de rede online. |
-| **WPScan** | Web Especializada | Auditoria profunda exclusiva do CMS WordPress (XML-RPC e wp-login). | Restrito a ambientes WordPress. |
+| **Medusa** | Online (Rede) | Extremamente estável, modular em C, paralelização rápida em serviços diretos (FTP, SMB, SSH). | Auditorias rápidas em portas de rede conhecidas. |
+| **THC-Hydra** | Online (Rede) | Excelente suporte a formulários web modernos (GET/POST), cookies, tokens CSRF e proxies. | Autenticação web e formulários complexos. |
+| **Ncrack** | Online (Rede) | Motor adaptativo que ajusta dinamicamente a taxa de envio conforme a latência e perda de pacotes da rede. | Avaliação em larga escala de redes com múltiplos hosts. |
+| **Patator** | Online (Rede) | Modular em Python, aceita regex e regras customizadas para requisições não convencionais. | Protocolos específicos ou respostas atípicas de servidores. |
+| **John the Ripper** | Offline (Host) | Quebra de hashes locais (`/etc/shadow`, NTLM, Kerberos) com aceleração por CPU/GPU e regras de mutação. | Quebra de credenciais pós-exfiltração de dados. |
+| **WPScan** | Aplicação Web | Auditoria dedicada à plataforma WordPress (plugins, temas, usuários e XML-RPC). | Testes de invasão direcionados a sites WordPress. |
 
-*(Para detalhes técnicos aprofundados, consulte o [Comparativo Completo](docs/comparativo-ferramentas.md)).*
+*(Para uma análise técnica detalhada, veja o documento [docs/comparativo-ferramentas.md](docs/comparativo-ferramentas.md)).*
 
 ---
 
-## 8. Medidas de Mitigação e Hardening (Blue Team)
+## 8. Medidas de Mitigação e Hardening
 
-Toda auditoria ética deve gerar orientações claras para defesa. As principais contramedidas incluem:
+Como profissionais de segurança, o objetivo principal dos testes de intrusão é orientar as medidas de proteção (*Blue Team*). As principais contramedidas aplicáveis são:
 
-1. **Implementação de MFA (Multi-Factor Authentication):**
-   - É a barreira mais eficiente contra ataques de força bruta, dicionário e credential stuffing. Mesmo com a senha correta, o acesso é negado sem a chave física ou token temporal.
-2. **Políticas de Bloqueio de Conta (*Account Lockout*):**
-   - No Linux, configurar o módulo PAM `pam_faillock` para bloquear a conta por 15 minutos após 5 erros consecutivos.
-3. **Rate Limiting no Nível de Rede com Fail2Ban:**
-   - Banir automaticamente no firewall endereços IP que gerem mais de 3 falhas de login por minuto em portas sensíveis (FTP, SSH, Web).
-4. **Hardening do Samba / SMB:**
-   - Desabilitar SMBv1 obsoleto, exigir assinatura de pacotes (`server signing = mandatory`) e restringir conexões nulas/anônimas (`restrict anonymous = 2`).
-5. **Proteção Web (CAPTCHA e WAF):**
-   - Adicionar CAPTCHA progressivo após a 2ª tentativa e configurar regras de WAF para limitar requisições POST para o endpoint `/login`.
+1. **Autenticação Multifator (MFA / 2FA):**  
+   Mesmo que o atacante descubra a senha correta em um ataque de dicionário ou spraying, o acesso não é concedido sem o segundo fator de autenticação (TOTP ou chave FIDO2).
+2. **Políticas de Bloqueio de Conta (*Account Lockout*):**  
+   Configurar no Linux o módulo PAM `pam_faillock` (ou `pam_tally2` em versões legadas) para bloquear contas temporariamente após 3 a 5 falhas consecutivas.
+3. **Rate Limiting no Firewall com Fail2Ban:**  
+   Monitorar logs de autenticação (`/var/log/auth.log` e `/var/log/vsftpd.log`) e bloquear temporariamente no firewall (`iptables`/`nftables`) IPs que gerem excesso de erros de login.
+4. **Hardening do Serviço SMB:**  
+   Desabilitar o protocolo legado SMBv1, exigir assinatura digital de pacotes (`server signing = mandatory`) e desativar conexões anônimas (*null sessions*).
+5. **Proteções em Aplicações Web:**  
+   Implementar CAPTCHAs progressivos após falhas consecutivas e aplicar regras em WAF (*Web Application Firewall*) para conter requisições repetitivas no endpoint de login.
 
-*(Um script de demonstração do funcionamento do Rate Limiter e Lockout está disponível em [scripts/defense_rate_limiter.py](scripts/defense_rate_limiter.py)).*
+*(O repositório inclui uma demonstração prática em Python sobre rate limiting e detecção de spraying em [scripts/defense_rate_limiter.py](scripts/defense_rate_limiter.py)).*
 
 ---
 
@@ -252,40 +231,37 @@ Toda auditoria ética deve gerar orientações claras para defesa. As principais
 dio-lab-bruteforce-medusa/
 │
 ├── README.md                      # Documentação completa do projeto
-├── .gitignore                     # Filtros de arquivos temporários e logs
+├── .gitignore                     # Filtros para logs e arquivos temporários
 │
 ├── docs/
-│   ├── medusa-cheatsheet.md       # Cheat Sheet com parâmetros e módulos do Medusa
-│   ├── comparativo-ferramentas.md # Estudo comparativo entre Medusa, Hydra, Ncrack, John, etc.
-│   └── guia-mitigacao-hardening.md# Guia avançado de defesa, PAM, Fail2Ban e Hardening SMB
+│   ├── medusa-cheatsheet.md       # Cheat sheet com sintaxe, módulos e opções do Medusa
+│   ├── comparativo-ferramentas.md # Estudo comparativo das ferramentas abordadas no curso
+│   └── guia-mitigacao-hardening.md# Guia prático de defesa, PAM, Fail2Ban e Hardening
 │
 ├── scripts/
-│   ├── network_recon.sh           # Script para verificação e varredura com Nmap
-│   ├── medusa_ftp_audit.sh        # Automação didática de auditoria de FTP
-│   ├── medusa_smb_spraying.sh     # Automação de teste de Password Spraying em SMB
-│   └── defense_rate_limiter.py    # Simulação Blue Team de Bloqueio e Detecção de Spraying
+│   ├── network_recon.sh           # Script em Bash para reconhecimento com Nmap
+│   ├── medusa_ftp_audit.sh        # Automação de teste no serviço FTP
+│   ├── medusa_smb_spraying.sh     # Automação de Password Spraying em SMB
+│   └── defense_rate_limiter.py    # Script didático em Python demonstrando defesas
 │
 ├── wordlists/
 │   ├── users_common.txt           # Lista de usuários comuns para testes
 │   ├── passwords_common.txt       # Dicionário de senhas fracas comuns
-│   └── smb_users.txt              # Lista de usuários para o cenário corporativo SMB
+│   └── smb_users.txt              # Usuários enumerados para teste de SMB
 │
 └── images/
-    └── README.md                  # Orientações sobre as capturas de tela das evidências
+    └── README.md                  # Orientações para organização de capturas de tela
 ```
 
 ---
 
-## 10. Conclusão e Referências
+## 10. Conclusão e Autor
 
-Este laboratório evidenciou como senhas fracas e serviços desprotegidos expõem infraestruturas críticas a testes automatizados de força bruta e password spraying. A utilização combinada de ferramentas de auditoria no Kali Linux demonstra que a segurança não reside no sigilo dos serviços, mas sim na aplicação rigorosa de defesas em camadas (*Defense in Depth*).
-
-### Referências Utilizadas:
-- [Documentação Oficial do Medusa](http://www.foofus.net/jmk/medusa/medusa.html)
-- [Kali Linux Documentation](https://www.kali.org/docs/)
-- [Nmap Network Scanning Book](https://nmap.org/book/)
-- [Damn Vulnerable Web Application (DVWA)](http://www.dvwa.co.uk/)
-- [Digital Innovation One (DIO) - Formação e Bootcamps](https://dio.me)
+Os testes executados comprovaram que senhas previsíveis e serviços sem limites de tentativas representam uma das portas de entrada mais comuns para invasores em ambientes corporativos. A segurança efetiva de uma rede depende da aplicação do princípio de **Defesa em Profundidade** (*Defense in Depth*), combinando senhas fortes, MFA, monitoramento de logs e políticas rigorosas de bloqueio.
 
 ---
-*Projeto desenvolvido para fins estritamente educacionais e de pesquisa em segurança da informação.*
+
+### Autor
+- **Lucas Rolim**
+- **GitHub:** [lucasrolim96](https://github.com/lucasrolim96)
+- **Projeto desenvolvido para:** Bootcamp Santander Cibersegurança - [DIO](https://dio.me)

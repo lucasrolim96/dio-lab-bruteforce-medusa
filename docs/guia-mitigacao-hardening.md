@@ -1,37 +1,34 @@
-# 🛡️ Guia Completo de Mitigação, Hardening e Defesa Ativa
+# Guia de Mitigação e Hardening de Serviços
 
-Em uma auditoria de segurança ética (*Red Team* ou *Blue Team*), o objetivo final de demonstrar vulnerabilidades de autenticação é fornecer recomendações técnicas precisas para fechar as brechas identificadas.
+O objetivo principal de qualquer teste de intrusão é diagnosticar vulnerabilidades para orientar a implementação de controles defensivos eficientes.
 
-Abaixo estão as estratégias de mitigação organizadas por camadas de defesa.
+Abaixo estão as medidas de segurança recomendadas para conter ataques de força bruta, dicionário e password spraying.
 
 ---
 
-## 1. Políticas de Bloqueio de Conta (*Account Lockout*)
+## 1. Políticas de Bloqueio de Conta (Account Lockout)
 
-O bloqueio temporário impede ataques de força bruta direcionados a um único usuário.
+### No Linux com PAM (`pam_faillock`)
+O módulo `pam_faillock` é o padrão atual em distribuições Linux (Debian, Ubuntu e RHEL).
 
-### No Linux (PAM - Pluggable Authentication Modules)
-Utilize o módulo `pam_faillock` (padrão em distribuições modernas como Debian/Ubuntu/RHEL):
-
-Edite `/etc/pam.d/common-auth`:
+Para configurar no arquivo `/etc/pam.d/common-auth`:
 ```pam
 auth required pam_faillock.so preauth audit silent deny=5 unlock_time=900
 auth [default=1 success=ignore] pam_unix.so nullok_secure
 auth [default=die] pam_faillock.so authfail audit deny=5 unlock_time=900
 auth sufficient pam_faillock.so authsucc
 ```
-* **Parâmetros:**
-  * `deny=5`: Bloqueia o acesso após 5 tentativas consecutivas incorretas.
-  * `unlock_time=900`: Mantém a conta bloqueada por 15 minutos (900 segundos).
+
+- `deny=5`: Bloqueia o usuário após 5 tentativas consecutivas incorretas.
+- `unlock_time=900`: Mantém a conta bloqueada durante 15 minutos (900 segundos).
 
 ---
 
-## 2. Implementação de Rate Limiting com Fail2Ban
+## 2. Rate Limiting com Fail2Ban
 
-O **Fail2Ban** monitora os arquivos de log do sistema (`/var/log/auth.log`, `/var/log/vsftpd.log`, logs do Apache/Nginx) e insere regras dinâmicas no firewall (`iptables`/`nftables`) para banir o endereço IP de onde partem os ataques.
+O **Fail2Ban** monitora os arquivos de log do sistema e insere automaticamente regras no firewall (`iptables` ou `nftables`) para bloquear IPs com excesso de erros.
 
-### Protegendo o Serviço FTP (vsftpd)
-No arquivo `/etc/fail2ban/jail.local`:
+### Proteção para FTP (`/etc/fail2ban/jail.local`):
 ```ini
 [vsftpd]
 enabled  = true
@@ -42,61 +39,45 @@ maxretry = 3
 findtime = 600
 bantime  = 3600
 ```
-* Qualquer IP que erre 3 tentativas em uma janela de 10 minutos terá seu tráfego banido por 1 hora no nível de kernel.
+- Bloqueia o IP por 1 hora se ocorrerem 3 falhas em um intervalo de 10 minutos.
 
 ---
 
-## 3. Defesas contra Password Spraying
+## 3. Defesa contra Password Spraying
 
-O *Password Spraying* foi concebido exatamente para burlar o *Account Lockout*, pois o atacante realiza poucas tentativas por usuário distribuídas em centenas de contas.
+Como o Password Spraying testa uma única senha contra vários usuários diferentes, ele não atinge o limite de tentativas por conta. As melhores defesas são:
 
-### Medidas de Mitigação:
-1. **Autenticação Multifator (MFA/2FA):** Mesmo que o atacante descubra que a senha é `123456` ou `Empresa@2026`, ele não terá acesso sem a chave física (FIDO2/WebAuthn) ou token TOTP.
-2. **Listas de Bloqueio de Senhas Conhecidas (*Password Blacklists*):**
-   * Impedir que colaboradores escolham senhas fracas, palavras do dicionário corporativo ou senhas que constem em vazamentos públicos (*Have I Been Pwned API*).
-3. **Análise Comportamental (UEBA) no SIEM:**
-   * Configurar alertas quando um único endereço IP ou subnet tentar autenticar em mais de 3 contas diferentes em um intervalo curto de tempo.
+1. **Autenticação de Dois Fatores (MFA / 2FA):**  
+   Impedir autenticações puramente baseadas em senha nos pontos de acesso externo (VPN, portais web e SSH).
+2. **Lista de Senhas Proibidas (*Password Blacklist*):**  
+   Impedir a definição de senhas fracas ou previsíveis (nomes da empresa, datas, estações do ano como `Verao@2024`).
+3. **Detecção Comportamental em SIEM / SOC:**  
+   Regras de correlação para alertar quando o mesmo endereço IP de origem gerar falhas de logon em mais de 3 nomes de usuários distintos em um período curto.
 
 ---
 
-## 4. Hardening do Serviço SMB (Samba / Windows)
+## 4. Hardening do Serviço Samba / SMB
 
-No Metasploitable 2 e em redes antigas, o SMB costuma permitir sessões nulas (*Null Sessions*), enumeração irrestrita de usuários e ausência de assinatura de pacotes.
+Em servidores Linux que utilizam Samba (`/etc/samba/smb.conf`):
 
-### Recomendações de Hardening (`/etc/samba/smb.conf`):
 ```ini
 [global]
-    # Desabilitar protocolos inseguros e legados (SMBv1)
+    # Desativar versão obsoleta do protocolo SMB (SMBv1)
     server min protocol = SMB2_10
     client min protocol = SMB2_10
 
-    # Forçar assinatura digital de pacotes SMB
+    # Forçar assinatura digital de pacotes
     server signing = mandatory
 
-    # Impedir acesso anônimo/convidado (Guest/Null Session)
+    # Desabilitar sessões anônimas e contas de convidado
     restrict anonymous = 2
     map to guest = Never
 ```
 
 ---
 
-## 5. Proteção de Aplicações Web (DVWA / Portais de Login)
+## 5. Proteções em Aplicações Web
 
-Para proteger formulários web contra Hydra, Medusa ou scripts customizados:
-
-1. **Desafio CAPTCHA:**
-   * Ativar desafios Cloudflare Turnstile ou Google reCAPTCHA v3 após a 2ª tentativa incorreta.
-2. **Mecanismo de Backoff Exponencial (*Tarpitting*):**
-   * Adicionar um delay artificial de resposta a cada tentativa consecutiva falha (1s, 2s, 4s, 8s). Isso destrói a eficiência de ferramentas multithread.
-3. **Web Application Firewall (WAF):**
-   * Configurar regras ModSecurity (OWASP Core Rule Set) ou AWS WAF para inspecionar requisições POST frequentes ao endpoint de autenticação.
-
----
-
-## 6. Matriz de Detecção (Blue Team / SOC)
-
-| Evento / Log | ID do Evento (Windows) | Arquivo de Log (Linux) | Assinatura de Alerta |
-| :--- | :--- | :--- | :--- |
-| **Tentativa de Força Bruta** | Event ID 4625 (Falha de Logon) | `/var/log/auth.log` | Mais de 10 falhas consecutivas para o mesmo `TargetUserName`. |
-| **Password Spraying** | Event ID 4625 com alto volume | `/var/log/auth.log` | Múltiplos eventos 4625 com o mesmo `SourceNetworkAddress` visando diferentes usuários. |
-| **Logon Bem-Sucedido Suspeito** | Event ID 4624 (Logon bem-sucedido) | `/var/log/auth.log` | Evento 4624 imediatamente precedido por múltiplos 4625 da mesma origem. |
+1. **Desafios CAPTCHA:** Ativar CAPTCHA progressivo após a 2ª tentativa de logon incorreta.
+2. **Atraso Progressivo (*Tarpitting*):** Introduzir um pequeno atraso (1 a 3 segundos) nas respostas de login com falha, o que reduz drasticamente a taxa de requisições de ferramentas automatizadas.
+3. **Web Application Firewall (WAF):** Aplicar limites de taxa (*rate limit*) de requisições POST para a rota de autenticação.

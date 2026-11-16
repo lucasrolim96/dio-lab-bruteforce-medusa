@@ -5,6 +5,9 @@ resultados_*.txt
 recon_*.txt
 medusa_*.txt
 
+# Scripts de automação local
+*.bat
+
 # Python
 __pycache__/
 *.pyc

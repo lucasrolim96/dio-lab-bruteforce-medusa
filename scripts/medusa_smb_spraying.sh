@@ -29,6 +29,6 @@ medusa -h "$TARGET_IP" \
        -v 4 \
        -O "$OUTPUT_FILE"
 
-echo -e "\n[✓] Spraying concluído. Relatório gerado em: $OUTPUT_FILE"
+echo -e "\n[+] Spraying concluido. Relatorio gerado em: $OUTPUT_FILE"
 echo "[*] Para validar um acesso encontrado, utilize:"
 echo "    smbclient -L //$TARGET_IP -U <usuario_encontrado>"

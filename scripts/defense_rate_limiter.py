@@ -31,7 +31,7 @@ class SecurityGateway:
     def __init__(self):
         # Base de usuários cadastrados (Simulando banco de dados)
         self.credentials: Dict[str, str] = {
-            "admin": "Admin@2026!Secure",
+            "admin": "Admin@2024#Sec",
             "msfadmin": "msfadmin",
             "user": "UserPassword#99",
             "developer": "DevSecret*42",

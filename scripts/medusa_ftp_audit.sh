@@ -44,4 +44,4 @@ medusa -h "$TARGET_IP" \
        -v 4 \
        -O "$OUTPUT_FILE"
 
-echo -e "\n[✓] Auditoria concluída. Relatório gerado em: $OUTPUT_FILE"
+echo -e "\n[+] Auditoria concluida. Relatorio gerado em: $OUTPUT_FILE"

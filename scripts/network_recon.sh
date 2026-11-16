@@ -15,9 +15,9 @@ echo "=================================================="
 # 1. Teste de Conectividade ICMP (Ping)
 echo -e "\n[*] 1. Testando conectividade com o alvo via ICMP..."
 if ping -c 2 -W 2 "$TARGET_IP" > /dev/null 2>&1; then
-    echo "[✓] Alvo $TARGET_IP está ALCANCE e RESPONDENDO a pings."
+    echo "[+] Alvo $TARGET_IP esta acessivel e respondendo ao ping."
 else
-    echo "[!] AVISO: Alvo não respondeu ao ping. Verifique se as VMs estão na mesma rede Host-Only."
+    echo "[-] AVISO: Alvo nao respondeu ao ping. Verifique se as VMs estao na mesma rede Host-Only."
 fi
 
 # 2. Varredura Rápida de Serviços Principais (FTP, SSH, HTTP, SMB)
