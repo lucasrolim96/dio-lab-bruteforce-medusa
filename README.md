@@ -221,7 +221,7 @@ Como profissionais de segurança, o objetivo principal dos testes de intrusão �
 5. **Proteções em Aplicações Web:**  
    Implementar CAPTCHAs progressivos após falhas consecutivas e aplicar regras em WAF (*Web Application Firewall*) para conter requisições repetitivas no endpoint de login.
 
-*(O repositório inclui uma demonstração prática em Python sobre rate limiting e detecção de spraying em [scripts/defense_rate_limiter.py](scripts/defense_rate_limiter.py)).*
+*(O repositório inclui uma demonstração prática em Python sobre rate limiting e detecção de spraying em [scripts/defense_rate_limiter.py](scripts/defense_rate_limiter.py), além de um estudo aprofundado sobre rotação de IP com Proxychains em [docs/proxychains-e-evasao.md](docs/proxychains-e-evasao.md)).*
 
 ---
 
@@ -236,12 +236,14 @@ dio-lab-bruteforce-medusa/
 ├── docs/
 │   ├── medusa-cheatsheet.md       # Cheat sheet com sintaxe, módulos e opções do Medusa
 │   ├── comparativo-ferramentas.md # Estudo comparativo das ferramentas abordadas no curso
-│   └── guia-mitigacao-hardening.md# Guia prático de defesa, PAM, Fail2Ban e Hardening
+│   ├── guia-mitigacao-hardening.md# Guia prático de defesa, PAM, Fail2Ban e Hardening
+│   └── proxychains-e-evasao.md    # Análise sobre Proxychains, rotação de IP e contramedidas
 │
 ├── scripts/
 │   ├── network_recon.sh           # Script em Bash para reconhecimento com Nmap
 │   ├── medusa_ftp_audit.sh        # Automação de teste no serviço FTP
 │   ├── medusa_smb_spraying.sh     # Automação de Password Spraying em SMB
+│   ├── medusa_proxychains_audit.sh# Execução encapsulada via Proxychains / Tor
 │   └── defense_rate_limiter.py    # Script didático em Python demonstrando defesas
 │
 ├── wordlists/
