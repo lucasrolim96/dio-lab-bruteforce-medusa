@@ -233,6 +233,17 @@ dio-lab-bruteforce-medusa/
 ├── README.md                      # Documentação completa do projeto
 ├── .gitignore                     # Filtros para logs e arquivos temporários
 │
+├── anotacoes-obsidian/            # Caderno de anotações técnicas para o Obsidian
+│   ├── MOC - Brute Force com Medusa.md  # Dashboard e mapa de conteúdo interativo
+│   ├── 01 - Preparacao do Laboratorio no VirtualBox.md
+│   ├── 02 - Reconhecimento e Varredura com Nmap.md
+│   ├── 03 - Ataque em FTP com Medusa.md
+│   ├── 04 - Forca Bruta Web no DVWA.md
+│   ├── 05 - Enumeracao e Password Spraying em SMB.md
+│   ├── 06 - Rotacao de IP com Proxychains e Tor.md
+│   ├── 07 - Mitigacoes e Hardening Blue Team.md
+│   └── attachments/               # Imagens e diagramas incorporados no Obsidian
+│
 ├── docs/
 │   ├── medusa-cheatsheet.md       # Cheat sheet com sintaxe, módulos e opções do Medusa
 │   ├── comparativo-ferramentas.md # Estudo comparativo das ferramentas abordadas no curso
