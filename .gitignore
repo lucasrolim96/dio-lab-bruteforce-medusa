@@ -8,6 +8,10 @@ medusa_*.txt
 # Scripts de automação local
 *.bat
 
+# Obsidian cache de janela
+workspace.json
+workspace-mobile.json
+
 # Python
 __pycache__/
 *.pyc
